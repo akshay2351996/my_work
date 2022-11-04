@@ -1,0 +1,34 @@
+---
+- name:  Deploy to Jboss
+  hosts: all
+  become: yes
+  tasks:
+  - name: Set the Variables.
+    set_fact:
+        download_dir:  "/apps/software/"
+        download_url:  "https://nexus.foa.corp.chartercom.com/repository/foa-maven-hosted/com/charter/smart/SMARTRest/7.1.3.4/SMARTRest-7.1.3.4.war"
+        artifact_file: "/apps/software/smartapifo_Volume_Task.war"
+
+  - name: Create Directories.
+    file:
+        path: "/apps/software/"
+        state: directory
+        mode: "0777"
+
+  - name: Download the artifacts.
+    get_url:
+          url: "{{ download_url }}"
+          dest: "{{ artifact_file }}"
+          validate_certs: false
+
+  - name: Connect to the Jboss CLI and Undeploy the existing war file.
+    shell: "/product/redhat/eap/jboss-eap-7.2-fo/bin/jboss-cli.sh --connect --command='undeploy --name=smartapifo_Volume_Task.war'"
+
+  - name: Deploy the newnew  war file.
+    shell: "/product/redhat/eap/jboss-eap-7.2-fo/bin/jboss-cli.sh --connect --command='deploy /product/redhat/eap/jboss-eap-7.2-fo/standalone/data/content/smartapifo_Volume_Task.war'"
+
+  - name: Restart jbosseap7-smartfo.
+    service:
+         name: jbosseap7-smartfo
+         state: restarted
+
